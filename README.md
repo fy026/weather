@@ -1,7 +1,7 @@
 ## 微服务demo 
 ---
 ### gateway   
-    是一个基于HTTP协议的restful的API网关。可以作为统一的API接入层,请求通过grpc传到后端服务,对后端服务做负载均衡,服务发现
+    是一个基于HTTP协议的restful的API网关。可以作为统一的API接入层,请求通过grpc传到后端服务,对后端服务做负载均衡,服务发现
     
 
 ### service   
