@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/fy026/weather/examples/proto"
-	"github.com/fy026/weather/lib/client"
-	"github.com/fy026/weather/lib/registry"
-	"github.com/fy026/weather/lib/registry/etcd"
+	"github.com/fy026/weather/pkg/client"
+	"github.com/fy026/weather/pkg/registry"
+	"github.com/fy026/weather/pkg/registry/etcd"
+	"github.com/fy026/weather/proto"
 	"golang.org/x/net/context"
 )
 

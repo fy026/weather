@@ -8,10 +8,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fy026/weather/examples/proto"
-	"github.com/fy026/weather/lib/registry"
-	"github.com/fy026/weather/lib/registry/etcd"
-	"github.com/fy026/weather/lib/server"
+	"github.com/fy026/weather/pkg/registry"
+	"github.com/fy026/weather/pkg/registry/etcd"
+	"github.com/fy026/weather/pkg/server"
+	"github.com/fy026/weather/proto"
 	"github.com/pborman/uuid"
 	"golang.org/x/net/context"
 )
@@ -23,12 +23,14 @@ var (
 	reg  = flag.String("reg", "http://localhost:2379", "register etcd address")
 )
 
-type testServer struct{}
+type testServer struct {
+	ServerId string
+}
 
 // SayHello implements helloworld.GreeterServer
 func (s *testServer) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	fmt.Printf("%v: Receive is %s\n", time.Now(), in.Name)
-	return &pb.HelloReply{Message: "Hello " + in.Name}, nil
+	fmt.Printf("%v: Receive is %s service id :%s\n", time.Now(), in.Name, s.ServerId)
+	return &pb.HelloReply{Message: fmt.Sprintf("Hello %s %s", in.Name, s.ServerId)}, nil
 }
 
 func main() {
@@ -48,15 +50,19 @@ func main() {
 		os.Exit(1)
 	}()
 
+	serviceId := uuid.NewUUID().String()
 	s := server.NewServer(
 		server.WithServiceName(*serv),
-		server.WithServiceId(uuid.NewUUID().String()),
+		server.WithServiceId(serviceId),
 		server.WithHost(*host),
 		server.WithPort(*port),
 		server.WithRegistry(registry),
 	)
+
+	ts := testServer{ServerId: serviceId}
+
 	if coreServ := s.GetGRPCServer(); coreServ != nil {
-		pb.RegisterGreeterServer(coreServ, &testServer{})
+		pb.RegisterGreeterServer(coreServ, &ts)
 		s.Start()
 	}
 
