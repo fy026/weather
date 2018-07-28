@@ -9,7 +9,7 @@ import (
 //ServOption option of server
 type Option struct {
 	serviceName string
-	registry    registry.Registry
+	registry    registry.Registry //服务发现注册组件
 	timeout     time.Duration
 }
 

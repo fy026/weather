@@ -12,7 +12,7 @@ type Option struct {
 	serviceId   string
 	host        string
 	port        string
-	registry    registry.Registry
+	registry    registry.Registry //服务发现注册组件
 	grpcOpts    []grpc.ServerOption
 }
 

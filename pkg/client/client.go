@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"sync"
 
 	"google.golang.org/grpc"
@@ -34,14 +35,19 @@ func (cli *Client) GetConn() (*grpc.ClientConn, error) {
 	cli.Lock()
 	defer cli.Unlock()
 
-	r, err := cli.opts.registry.InitResolve()
-	if err != nil {
-		return nil, err
+	dialOpts := []grpc.DialOption{grpc.WithTimeout(cli.opts.timeout), grpc.WithInsecure(), grpc.WithBlock()}
+
+	if cli.opts.registry != nil {
+		fmt.Println("registry open")
+		r, err := cli.opts.registry.InitResolve()
+		if err != nil {
+			return nil, err
+		}
+		b := grpc.RoundRobin(r)
+
+		dialOpts = append(dialOpts, grpc.WithBalancer(b))
 	}
-	b := grpc.RoundRobin(r)
-
-	dialOpts := []grpc.DialOption{grpc.WithTimeout(cli.opts.timeout), grpc.WithBalancer(b), grpc.WithInsecure(), grpc.WithBlock()}
-
+	fmt.Println("service name:", cli.opts.serviceName)
 	conn, err := grpc.Dial(cli.opts.serviceName, dialOpts...)
 	if err != nil {
 		return nil, err

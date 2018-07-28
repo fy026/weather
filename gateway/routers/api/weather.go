@@ -15,19 +15,20 @@ import (
 )
 
 var wcClient *client.Client
-var wcServiceName = "ts"
 
 func init() {
-	reg, err := etcd.NewEtcdRegisty(registry.WithAddress(setting.RegisterUrl))
-	if err != nil {
-		return
+
+	opts := []client.Options{client.WithServiceName(setting.EndServiceName),
+		client.WithTimeout(time.Second * 10)}
+	if setting.ENV != "k8s" {
+		reg, err := etcd.NewEtcdRegisty(registry.WithAddress(setting.RegisterUrl))
+		if err != nil {
+			return
+		}
+		opts = append(opts, client.WithRegistry(reg))
 	}
 
-	wcClient = client.NewClient(
-		client.WithServiceName(wcServiceName),
-		client.WithTimeout(time.Second*10),
-		client.WithRegistry(reg),
-	)
+	wcClient = client.NewClient(opts...)
 
 }
 

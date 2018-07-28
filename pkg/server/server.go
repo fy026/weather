@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/naming"
 	"google.golang.org/grpc/reflection"
 )
@@ -30,7 +30,7 @@ func (s *Server) GetGRPCServer() *grpc.Server {
 }
 
 func (s *Server) Start() error {
-	servAddress := fmt.Sprintf("%s:%s", s.opts.host, s.opts.port)
+	servAddress := fmt.Sprintf(":%s", s.opts.port)
 	lis, err := net.Listen("tcp", servAddress)
 	if err != nil {
 		return err
@@ -38,13 +38,15 @@ func (s *Server) Start() error {
 
 	//registry
 	if s.opts.registry != nil {
+		if len(os.Getenv("REGISTER_ADDR")) > 0 { //docker 启动的时候设置环境变量把地址传过来
+			servAddress = os.Getenv("REGISTER_ADDR")
+		}
+		fmt.Println("registry addr:", servAddress)
 		err := s.opts.registry.Register(context.TODO(), s.opts.serviceName,
 			naming.Update{Op: naming.Add, Addr: servAddress, Metadata: "..."})
 		if err != nil {
 			return err
 		}
-	} else {
-		grpclog.Info("registry is nil")
 	}
 
 	// Register reflection service on gRPC server.

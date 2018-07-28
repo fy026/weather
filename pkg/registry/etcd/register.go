@@ -3,6 +3,7 @@ package etcd
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -122,12 +123,15 @@ func (er *EtcdRegistry) Register(ctx context.Context, target string, update nami
 		}
 		etcdOpts := []etcd.OpOption{etcd.WithLease(lsRsp.ID)}
 		key := target + "/" + update.Addr
+		fmt.Printf("etcd registry key:%s\n", key)
 		_, err = er.cli.KV.Put(ctx, key, string(upBytes), etcdOpts...)
 		if err != nil {
+			fmt.Printf("etcd registry error:%s\n", err.Error())
 			return err
 		}
 		lsRspChan, err := er.lsCli.KeepAlive(context.TODO(), lsRsp.ID)
 		if err != nil {
+			fmt.Printf("etcd registry keep alive %d error:%s\n", lsRsp.ID, err.Error())
 			return err
 		}
 		go func() {
@@ -165,8 +169,11 @@ func (ew *etcdWatcher) Next() ([]*naming.Update, error) {
 			if err := json.Unmarshal(kv.Value, &upt); err != nil {
 				continue
 			}
+			// grpclog.Infof("etcd addr:%", upt.Addr)
+			fmt.Println("etcd addr:", upt.Addr)
 			updates = append(updates, &upt)
 		}
+		fmt.Printf("etcd addr:%v\n", updates)
 		opts := []etcd.OpOption{etcd.WithRev(resp.Header.Revision + 1), etcd.WithPrefix(), etcd.WithPrevKV()}
 		ew.watchChan = ew.cli.Watch(context.TODO(), ew.target, opts...)
 		return updates, nil

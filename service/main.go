@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -12,15 +11,9 @@ import (
 	"github.com/fy026/weather/pkg/registry/etcd"
 	"github.com/fy026/weather/pkg/server"
 	"github.com/fy026/weather/proto"
+	"github.com/fy026/weather/service/pkg/setting"
 	"github.com/pborman/uuid"
 	"golang.org/x/net/context"
-)
-
-var (
-	serv = flag.String("n", "ts", "service name")
-	host = flag.String("h", "127.0.0.1", "listening port")
-	port = flag.String("p", "50001", "listening port")
-	reg  = flag.String("reg", "http://localhost:2379", "register etcd address")
 )
 
 type testServer struct {
@@ -34,30 +27,33 @@ func (s *testServer) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.Hel
 }
 
 func main() {
-	flag.Parse()
-
-	registry, err := etcd.NewEtcdRegisty(registry.WithAddress(*reg))
-	if err != nil {
-		return
+	serviceId := uuid.NewUUID().String()
+	fmt.Printf("server service name:%s\n", setting.Server_Name)
+	opts := []server.Options{
+		server.WithServiceName(setting.Server_Name),
+		server.WithServiceId(serviceId),
+		server.WithHost(setting.HTTPHost),
+		server.WithPort(setting.HTTPPort),
 	}
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGQUIT)
-	go func() {
-		s := <-ch
-		fmt.Printf("receive signal '%v'", s)
-		registry.Deregister()
-		os.Exit(1)
-	}()
+	if setting.ENV != "k8s" {
+		registry, err := etcd.NewEtcdRegisty(registry.WithAddress(setting.RegisterUrl))
+		if err != nil {
+			fmt.Println("registy error:", err.Error())
+			return
+		}
+		opts = append(opts, server.WithRegistry(registry))
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGQUIT)
+		go func() {
+			s := <-ch
+			fmt.Printf("receive signal '%v'", s)
+			registry.Deregister()
+			os.Exit(1)
+		}()
+	}
 
-	serviceId := uuid.NewUUID().String()
-	s := server.NewServer(
-		server.WithServiceName(*serv),
-		server.WithServiceId(serviceId),
-		server.WithHost(*host),
-		server.WithPort(*port),
-		server.WithRegistry(registry),
-	)
+	s := server.NewServer(opts...)
 
 	ts := testServer{ServerId: serviceId}
 

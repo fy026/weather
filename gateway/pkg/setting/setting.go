@@ -10,13 +10,15 @@ import (
 var (
 	Cfg *ini.File
 
-	RunMode string
-
+	RunMode      string
+	ENV          string
 	HTTPPort     int
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
 
 	RegisterUrl string
+
+	EndServiceName string
 )
 
 func init() {
@@ -29,11 +31,13 @@ func init() {
 	LoadBase()
 	LoadServer()
 	LoadRegister()
+	LoadEndServer()
 
 }
 
 func LoadBase() {
 	RunMode = Cfg.Section("").Key("RUN_MODE").MustString("debug")
+	RunMode = Cfg.Section("").Key("ENV").MustString("")
 }
 
 func LoadServer() {
@@ -44,7 +48,7 @@ func LoadServer() {
 
 	RunMode = Cfg.Section("").Key("RUN_MODE").MustString("debug")
 
-	HTTPPort = sec.Key("HTTP_PORT").MustInt(8000)
+	HTTPPort = sec.Key("HTTP_PORT").MustInt(8001)
 	ReadTimeout = time.Duration(sec.Key("READ_TIMEOUT").MustInt(60)) * time.Second
 	WriteTimeout = time.Duration(sec.Key("WRITE_TIMEOUT").MustInt(60)) * time.Second
 
@@ -58,4 +62,12 @@ func LoadRegister() {
 
 	RegisterUrl = sec.Key("REGISTER_RUL").MustString("http://127.0.0.1:2379")
 
+}
+
+func LoadEndServer() {
+	sec, err := Cfg.GetSection("endservice")
+	if err != nil {
+		log.Fatalf("Fail to get endservice 'register': %v", err)
+	}
+	EndServiceName = sec.Key("END_SERVICE_NAME").MustString("ts")
 }
