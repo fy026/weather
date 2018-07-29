@@ -7,8 +7,8 @@ import (
 	"github.com/fy026/weather/gateway/pkg/e"
 	"github.com/fy026/weather/gateway/pkg/setting"
 	"github.com/fy026/weather/pkg/client"
-	"github.com/fy026/weather/pkg/registry"
-	"github.com/fy026/weather/pkg/registry/etcd"
+	// "github.com/fy026/weather/pkg/registry"
+	// "github.com/fy026/weather/pkg/registry/etcd"
 	"github.com/fy026/weather/proto"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/net/context"
@@ -21,11 +21,11 @@ func init() {
 	opts := []client.Options{client.WithServiceName(setting.EndServiceName),
 		client.WithTimeout(time.Second * 10)}
 	if setting.ENV != "k8s" {
-		reg, err := etcd.NewEtcdRegisty(registry.WithAddress(setting.RegisterUrl))
-		if err != nil {
-			return
-		}
-		opts = append(opts, client.WithRegistry(reg))
+		// reg, err := etcd.NewEtcdRegisty(registry.WithAddress(setting.RegisterUrl))
+		// if err != nil {
+		// 	return
+		// }
+		// opts = append(opts, client.WithRegistry(reg))
 	}
 
 	wcClient = client.NewClient(opts...)

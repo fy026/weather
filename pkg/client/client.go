@@ -50,6 +50,7 @@ func (cli *Client) GetConn() (*grpc.ClientConn, error) {
 	fmt.Println("service name:", cli.opts.serviceName)
 	conn, err := grpc.Dial(cli.opts.serviceName, dialOpts...)
 	if err != nil {
+		fmt.Printf("dial service falsed name:%s error:%s\n", cli.opts.serviceName, err.Error())
 		return nil, err
 	}
 	cli.connPool[cli.opts.serviceName] = conn
